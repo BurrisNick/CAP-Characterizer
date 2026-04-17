@@ -3,7 +3,7 @@
 # plugin. includes data analysis helpers for experiments ran with the custom plug in as well as general ephys data anylsis,
 # file converters, file locators for files not stored locally, and plug in control functions.
 # created 8/1/25
-# last edit 3/20/26
+# last edit 3/12/26
 ########################################################################################################################
 # from open_ephys.analysis import Session
 import soundfile as sf
@@ -17,7 +17,6 @@ from datetime import datetime
 from open_ephys.analysis import Session
 import scipy.io as sio
 
-
  ########################################################################################################################
 # library variable initiation
 ########################################################################################################################
@@ -25,7 +24,7 @@ configTimeout = 0.5
 timeStop = 0.1
 
 
-def getDataOE(expDate,wavFile):
+def getDataOE(DataPath, expDate ,wavFile):
     """
     gets the data files from open-ephys. data must be aquired by OE for this file format.
     You must know the path of the recorded open ephys data. change the data path in this function
@@ -332,21 +331,26 @@ def AverageData(data, sr, on, off=0, channel=0, startSamp=0, freq=1, preStimTime
 
     slicedData = []
     choppedData = []
+
+    if data.ndim == 1:
+        data = np.expand_dims(data, axis=1)
+
+
     print(np.shape(data)[1])
 
-    onSamps = on * sr
-    offSamps = off * sr
-    numPulses = on*freq
+    onSamps = int(on * sr)
+    offSamps = int(off * sr)
+    numPulses = int(on*freq)
     postStimTimeSamps = int(postStimTime*sr / 1000) #(ms)
     preStimTimeSamps = int(preStimTime*sr / 1000) #(ms)
-    sampsBetweenPulses = sr / freq
+    sampsBetweenPulses = int(sr / freq)
+
 
     for ind in range(np.shape(data)[1]):
         slicedData.append(data[startSamp:(startSamp + onSamps), ind])
 
     slicedData = np.array(slicedData).T  #numpy array transposes python lists. transpose back
     knd = 0
-
     for ind in range(numPulses):
         knd = int(ind * sampsBetweenPulses)
         choppedData.append(slicedData[knd: (knd + postStimTimeSamps), channel])
@@ -368,9 +372,9 @@ def AverageData(data, sr, on, off=0, channel=0, startSamp=0, freq=1, preStimTime
     return avData
 
 
-def dataVis(data,channels, sr):
+def dataVis(data, channels=[], sr=1,timeVec=[], channelNames=None, extraInfo='',yAxisTitle='', saveFig=False):
     '''
-
+    visualizes data of all channels on a subplot with axis linked for easy data analysis
     :param data: data matrix containing all channels of data
     :param channels: channels you want to plot
     :param sr: the sample rate of aquisition
@@ -381,32 +385,81 @@ def dataVis(data,channels, sr):
     ind = 1
     ax = []
 
+    if channels == []:
+        channums = data.shape[1]
+        print("\n channel shape: ",channums)
+
+        for chans in range(channums):
+            channels.append(chans)
+        print("\nchannels: ",channels)
+
+    if channelNames is None:
+        channelNames = channels
+
+
+
     for chan in channels:
         ax.append('ax' + f'{ind}')
         ind += 1
 
     fig, ax = plt.subplots(len(ax), 1, sharex=True)  # 1 row, 2 columns
-    timevec = np.arange(0, len(data), 1) / sr * 1000
+
+    if len(timeVec) == 0:
+        timevec = np.arange(0, len(data), 1) / sr * 1000
+    else:
+        timevec = timeVec
+
+    fig.suptitle(f'Ephys Data: {extraInfo}', fontsize=12)  #
 
     ind = 0
     for chan in channels:
-        ax[ind].plot(timevec, data[:, chan], lw=lw)
+
+        ax[ind].plot(timevec, data[:, chan-1], lw=lw)
+        ax[ind].set_ylabel(f"{channelNames[ind]}")
+
         ind += 1
 
-    #
-    # ax1.plot(timevec, data[:, 1], lw=lw)
-    # ax2.plot(timevec, data[:, 5], lw=lw)
-    # ax3.plot(timevec, data[:, 7], lw=lw)
-    # ax4.plot(timevec, data[:, 6], lw=lw)
-    # ax5.plot(timevec, data[:, 13], lw=lw)
-
     plt.tight_layout()
-    plt.show()
+    if yAxisTitle == '':
+        plt.xlabel(f" Time (ms)")
+    else:
+        plt.xlabel(f"{yAxisTitle}")
+
+    if saveFig is not True:
+        plt.show()
 
 #################################################################################################
 # data analysis for ephys experiments: there are OE specific and ANC specific files.
 #################################################################################################
 
+def chargeDurationAnalysis():
+    """
+    analze data gathered from the ANC stimulation algorithm. this data will soon be collected by
+    the LFAC generator plug-in.
+    """
 
 
+def getDataCD(DataPath, expName, trial):
+    """
+    gets data loaded from matlab files
+    :param DataPath the main data folder path, will hold
+    :param expName name of the experiment folder containing data
+    :param trial specific trial or mat file you are wanting to extract
+    :return: data: all of the contents of the .mat file as a dictionary and variable names as keys
+    """
 
+    dash = "/"
+
+    path = DataPath + dash + expName + dash + trial  # generate the full path from the pieces
+    print(f"{path}")
+    print(f"does the path exist?   {os.path.exists(path)}")
+
+    while not os.path.exists(path):
+        print("path does not exist! \nCheck data path location and trial name")
+        DataPath = input("DataPath:  ")
+        expName = input("expDate:  ")
+        trial = input("Trial name:  ")
+        path = DataPath + dash + expName + dash + trial  # generate the full path from the pieces
+
+    data = sio.loadmat(path)
+    return data
