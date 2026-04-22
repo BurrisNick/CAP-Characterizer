@@ -10,6 +10,10 @@ def CAPcharac(dataPath):
 
     # booooooo
 
+
+
+    # poop
+
     time = data['x-axis']
     eng = data['1']
     pulse = data['2']
