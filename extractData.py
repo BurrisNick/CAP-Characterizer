@@ -9,7 +9,10 @@ for file in Path("data").rglob("*.csv"):
 
     if output is not None:
         amp, lat, hw = output
-        results.append([file.name, amp, lat, hw])
 
-df = pd.DataFrame(results, columns=["file", "amplitude", "latency", "halfwidth"])
+        category = file.parent.name
+
+        results.append([category, file.name, amp, lat, hw])
+
+df = pd.DataFrame(results, columns=["category", "file", "amplitude", "latency", "halfwidth"])
 print(df)
