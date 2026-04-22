@@ -4,7 +4,7 @@ import pandas as pd
 from scipy import signal
 from scipy.signal import find_peaks
 
-def CAPcharac(dataPath):
+def CAPcharac(dataPath, category):
     data = pd.read_csv(dataPath)
 
     time = data['x-axis']
@@ -16,7 +16,7 @@ def CAPcharac(dataPath):
     pulse.pop(0)
 
     #converts any strings to number 
-    time = pd.to_numeric(time)
+    time = pd.to_numeric(time) *1000
     eng = pd.to_numeric(eng)
     pulse = pd.to_numeric(pulse)
 
@@ -24,22 +24,41 @@ def CAPcharac(dataPath):
     sr = int(len(time) / (abs(np.min(time)) + abs(np.max(time))))
 
 
-    dist = sr*0.005 #minimum distance between APs
+    dist = sr*1000*0.005 #minimum distance between APs
 
-    eng1 = eng
+    eng -= np.mean(eng[0:30])
+    pulse -= np.mean(pulse[0:30])
+
     pulse1 = pulse
     #applies rolling average to minimize noise 
     eng1 = eng.rolling(window=7, center=True).mean()
     eng1 = eng1.rolling(window=7, center=True).mean()
     eng1 = eng1.rolling(window=7, center=True).mean()
-    dataMax = np.max(eng1)
+    dataMax = np.max(abs(eng1))
 
     ENGpeaks, props = find_peaks(eng1, height=(dataMax / 3), distance=dist, rel_height=0.5, width=0)
+
+    #check if inverted
+    if ENGpeaks is None:
+        ENGpeaks, props = find_peaks(-eng1, height=(dataMax / 3), distance=dist, rel_height=0.5, width=0)
+
+    if ENGpeaks.any() < 0.05:
+        #swap the channels
+        print("ahhhhhhhhhhhhhhhh")
+        eng1 = pulse1
+        pulse1 = eng
+
+        eng1 = eng1.rolling(window=7, center=True).mean()
+        eng1 = eng1.rolling(window=7, center=True).mean()
+        eng1 = eng1.rolling(window=7, center=True).mean()
+        dataMax = np.max(eng1)
+
+        ENGpeaks, props = find_peaks(eng1, height=(dataMax / 3), distance=dist, rel_height=0.5, width=0)
 
     if len(ENGpeaks) == 0:
         return None
 
-    hwidth = props['widths'] / sr * 1000
+    hwidth = props['widths'] / sr
 
     timeENGPeak = time.iloc[ENGpeaks].values
     magPeak = eng1.iloc[ENGpeaks].values
@@ -53,16 +72,17 @@ def CAPcharac(dataPath):
     ### plotting the pulse and ENG along with the raw data
     plt.plot(time, eng)
     plt.plot(time, eng1)
-    plt.plot(time, pulse)
     plt.plot(time, pulse1)
     plt.plot(timeENGPeak, magPeak, 'o')
 
     if magPeak.shape[0] > 1:
-        titleText = f'AP mag 1: {magPeak[0] * 1000:.1f}mV, mag 2: {magPeak[1] * 1000:.1f}mV' \
-                    f'\nLatency 1st: {timeENGPeak[0] * 1000:.1f}ms, 2nd {timeENGPeak[1] * 1000:.1f}ms' \
+        titleText = f'{category}'\
+                    f'AP mag 1: {magPeak[0] * 1000:.1f}mV, mag 2: {magPeak[1] * 1000:.1f}mV' \
+                    f'\nLatency 1st: {timeENGPeak[0]:.1f}ms, 2nd {timeENGPeak[1]:.1f}ms' \
                     f'\nhalfwidth 1st: {hwidth[0]:.1f}ms, 2nd: {hwidth[1]:.1f}ms'
     else:
-        titleText = f'AP mag: {magPeak[0] * 1000:.1f}mV' \
+        titleText = f'{category}'\
+                    f'AP mag: {magPeak[0] * 1000:.1f}mV' \
                     f'\nLatency: {timeENGPeak[0] * 1000:.1f}ms' \
                     f'\nhalfwidth: {hwidth[0]:.1f}ms'
 
@@ -82,17 +102,17 @@ def CAPcharac(dataPath):
 
     # need to add function for second peak if detected.
     # use for loop for this
-    if magPeak.shape[0] > 1:
-        avLatency = np.mean(latency[0])
-        avAmps = np.mean(amplitude[0])
-        avWidth = np.mean(halfwidth[0])
-    else:
-        avLatency = np.mean(latency)
-        avAmps = np.mean(amplitude)
-        avWidth = np.mean(halfwidth)
+    # if magPeak.shape[0] > 1:
+    #     avLatency = np.mean(latency[0])
+    #     avAmps = np.mean(amplitude[0])
+    #     avWidth = np.mean(halfwidth[0])
+    # else:
+    #     avLatency = np.mean(latency)
+    #     avAmps = np.mean(amplitude)
+    #     avWidth = np.mean(halfwidth)
 
-    print(f'average amplitude is: {avAmps * 1000: .2f}mV\n'
-          f'average latency is: {avLatency * 1000: .2f}ms\n'
-          f'average half width is: {avWidth:.2f}ms\n')
+    # print(f'average amplitude is: {avAmps * 1000: .2f}mV\n'
+    #       f'average latency is: {avLatency * 1000: .2f}ms\n'
+    #       f'average half width is: {avWidth:.2f}ms\n')
 
     return amplitude, latency, halfwidth

@@ -5,12 +5,14 @@ import pandas as pd
 results = []
 
 for file in Path("data").rglob("*.csv"):
-    output = CAPcharac(file)
+    category = file.parent.name # determines what category of trials
+
+    output = CAPcharac(file, category)
+
 
     if output is not None:
-        amp, lat, hw = output
 
-        category = file.parent.name
+        amp, lat, hw = output
 
         results.append([category, file.name, amp, lat, hw])
 
