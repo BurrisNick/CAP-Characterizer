@@ -8,12 +8,6 @@ from scipy.signal import find_peaks
 def CAPcharac(dataPath):
     data = pd.read_csv(dataPath)
 
-    # booooooo
-
-
-
-    # poop
-
     time = data['x-axis']
     eng = data['1']
     pulse = data['2']
