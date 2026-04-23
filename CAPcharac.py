@@ -34,26 +34,40 @@ def CAPcharac(dataPath, category):
     eng1 = eng.rolling(window=7, center=True).mean()
     eng1 = eng1.rolling(window=7, center=True).mean()
     eng1 = eng1.rolling(window=7, center=True).mean()
-    dataMax = np.max(abs(eng1))
+    engMax = np.max(abs(eng1))
+    pulseMax = np.max(abs(pulse))
 
-    ENGpeaks, props = find_peaks(eng1, height=(dataMax / 3), distance=dist, rel_height=0.5, width=0)
+    ENGpeaks, props = find_peaks(eng1, height=(engMax / 3), distance=dist, rel_height=0.5, width=0)
+    print('peak shape',ENGpeaks.shape)
 
     #check if inverted
-    if ENGpeaks is None:
-        ENGpeaks, props = find_peaks(-eng1, height=(dataMax / 3), distance=dist, rel_height=0.5, width=0)
+    if len(ENGpeaks) == 0 or time[ENGpeaks[0]] < 2.8:
+        print("inverted electrodes")
+        eng = -eng
+        eng1 = -eng1
+        ENGpeaks, props = find_peaks(eng1, height=(engMax / 3), distance=dist, rel_height=0.5, width=0)
 
-    if ENGpeaks.any() < 0.05:
+
+    if ENGpeaks.any() < pulseMax/2:
         #swap the channels
-        print("ahhhhhhhhhhhhhhhh")
+        print("wrong channels")
         eng1 = pulse1
         pulse1 = eng
+        eng = eng1
 
         eng1 = eng1.rolling(window=7, center=True).mean()
         eng1 = eng1.rolling(window=7, center=True).mean()
         eng1 = eng1.rolling(window=7, center=True).mean()
-        dataMax = np.max(eng1)
+        engMax = np.max(eng1)
 
-        ENGpeaks, props = find_peaks(eng1, height=(dataMax / 3), distance=dist, rel_height=0.5, width=0)
+        ENGpeaks, props = find_peaks(eng1, height=(engMax / 3), distance=dist, rel_height=0.5, width=0)
+
+        # check if inverted
+        if len(ENGpeaks) == 0 or time[ENGpeaks[0]] < 2.8:
+            print("inverted electrodes")
+            eng = -eng
+            eng1 = -eng1
+            ENGpeaks, props = find_peaks(eng1, height=(engMax / 3), distance=dist, rel_height=0.5, width=0)
 
     if len(ENGpeaks) == 0:
         return None
@@ -70,9 +84,9 @@ def CAPcharac(dataPath, category):
 
     ###################################################
     ### plotting the pulse and ENG along with the raw data
-    plt.plot(time, eng)
-    plt.plot(time, eng1)
-    plt.plot(time, pulse1)
+    plt.plot(time, eng, label='eng')
+    plt.plot(time, eng1, label='eng1')
+    plt.plot(time, pulse1,label='pulse1')
     plt.plot(timeENGPeak, magPeak, 'o')
 
     if magPeak.shape[0] > 1:
@@ -83,14 +97,16 @@ def CAPcharac(dataPath, category):
     else:
         titleText = f'{category}'\
                     f'AP mag: {magPeak[0] * 1000:.1f}mV' \
-                    f'\nLatency: {timeENGPeak[0] * 1000:.1f}ms' \
+                    f'\nLatency: {timeENGPeak[0]:.1f}ms' \
                     f'\nhalfwidth: {hwidth[0]:.1f}ms'
 
     plt.title(titleText)
     plt.xlabel('time (ms)')
     plt.ylabel('magnitude (V)')
-    plt.show()
+    plt.legend()
 
+    if max(time) > 30:
+        plt.xlim(min(time), 30)
     plt.show()
 
     # order = 3
