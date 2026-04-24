@@ -23,7 +23,6 @@ def CAPcharac(dataPath, category):
     #calculates sampling rate 
     sr = int(len(time) / (abs(np.min(time)) + abs(np.max(time))))
 
-
     dist = sr*1000*0.005 #minimum distance between APs
 
     eng -= np.mean(eng[0:30])
@@ -84,31 +83,29 @@ def CAPcharac(dataPath, category):
 
     ###################################################
     ### plotting the pulse and ENG along with the raw data
-    plt.plot(time, eng, label='eng')
-    plt.plot(time, eng1, label='eng1')
-    plt.plot(time, pulse1,label='pulse1')
-    plt.plot(timeENGPeak, magPeak, 'o')
+#    plt.plot(time, eng, label='eng')
+#    plt.plot(time, eng1, label='eng1')   plt.plot(time, pulse1,label='pulse1')
+#   plt.plot(timeENGPeak, magPeak, 'o')
 
-    if magPeak.shape[0] > 1:
-        titleText = f'{category}'\
-                    f'AP mag 1: {magPeak[0] * 1000:.1f}mV, mag 2: {magPeak[1] * 1000:.1f}mV' \
-                    f'\nLatency 1st: {timeENGPeak[0]:.1f}ms, 2nd {timeENGPeak[1]:.1f}ms' \
-                    f'\nhalfwidth 1st: {hwidth[0]:.1f}ms, 2nd: {hwidth[1]:.1f}ms'
-    else:
-        titleText = f'{category}'\
-                    f'AP mag: {magPeak[0] * 1000:.1f}mV' \
-                    f'\nLatency: {timeENGPeak[0]:.1f}ms' \
-                    f'\nhalfwidth: {hwidth[0]:.1f}ms'
+#   if magPeak.shape[0] > 1:
+#        titleText = f'{category}'\
+#                    f'AP mag 1: {magPeak[0] * 1000:.1f}mV, mag 2: {magPeak[1] * 1000:.1f}mV' \
+#                    f'\nLatency 1st: {timeENGPeak[0]:.1f}ms, 2nd {timeENGPeak[1]:.1f}ms' \
+#                    f'\nhalfwidth 1st: {hwidth[0]:.1f}ms, 2nd: {hwidth[1]:.1f}ms'
+#    else:
+#        titleText = f'{category}'\
+#                    f'AP mag: {magPeak[0] * 1000:.1f}mV' \
+#                    f'\nLatency: {timeENGPeak[0]:.1f}ms' \
+#                    f'\nhalfwidth: {hwidth[0]:.1f}ms'
 
-    plt.title(titleText)
-    plt.xlabel('time (ms)')
-    plt.ylabel('magnitude (V)')
-    plt.legend()
+#    plt.title(titleText)
+#    plt.xlabel('time (ms)')
+#    plt.ylabel('magnitude (V)')
+#    plt.legend()
 
-    if max(time) > 30:
-        plt.xlim(min(time), 30)
-    plt.show()
-
+#    if max(time) > 30:
+#        plt.xlim(min(time), 30)
+#    plt.show()
     # order = 3
     # band = [50, 3000]
     # print(sr)
