@@ -6,11 +6,11 @@ import pandas as pd
 import seaborn as sns
 
 results = []
-
+trial = 0 #keep track of the which CSV we are in (DEBUG)
 for file in Path("data").rglob("*.csv"):
     category = file.parent.name # determines what category of trials
-
-    output = CAPcharac(file, category)
+    trial += 1
+    output = CAPcharac(file, category, trial)
 
     if output is not None:
 
@@ -63,7 +63,9 @@ pivot_hw = summary.pivot_table(
 
 #paired line plot to visualize paired changes with temperature
 for _, row in pivot_amp.iterrows():
+
     plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='.')
+
 
 plt.xlabel("Temperature")
 plt.ylabel("Amplitude")
