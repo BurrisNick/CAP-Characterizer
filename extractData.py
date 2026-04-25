@@ -7,11 +7,11 @@ import pandas as pd
 import seaborn as sns
 
 results = []
-
+trial = 0 #keep track of the which CSV we are in (DEBUG)
 for file in Path("data").rglob("*.csv"):
     category = file.parent.name # determines what category of trials
-
-    output = CAPcharac(file, category)
+    trial += 1
+    output = CAPcharac(file, category, trial)
 
     if output is not None:
 
