@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from CAPcharac import CAPcharac
 from pathlib import Path
+from scipy.stats import ttest_rel
 import pandas as pd
 import seaborn as sns
 
@@ -39,7 +40,6 @@ summary = df.groupby(["frog", "nerve", "temp"]).agg(
     mean_hw=("halfwidth", "mean"),
     sd_hw=("halfwidth", "std")
 ).reset_index()
-
 print(summary)
 
 # have each temp together by nerve 
@@ -48,42 +48,66 @@ pivot_amp = summary.pivot_table(
     columns="temp",
     values="mean_amp"
 ).reset_index()
-
+pivot_amp = pivot_amp[["frog", "nerve", "cold", "room"]]
 pivot_lat = summary.pivot_table(
     index=["frog", "nerve"],
     columns="temp",
     values="mean_lat"
 ).reset_index()
-
+pivot_lat = pivot_lat[["frog", "nerve", "cold", "room"]]
 pivot_hw = summary.pivot_table(
     index=["frog", "nerve"],
     columns="temp",
     values="mean_hw"
 ).reset_index()
+pivot_hw = pivot_hw[["frog", "nerve", "cold", "room"]]
 
-#paired line plot to visualize paired changes with temperature
+#paired line plot to visualize paired amplitude changes with temperature
+plt.figure(1)
 for _, row in pivot_amp.iterrows():
-    plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='.')
-
+    plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='o')
 plt.xlabel("Temperature")
 plt.ylabel("Amplitude")
 plt.title("Paired Nerve Amplitude")
 plt.show()
 
-# paired t test
-from scipy.stats import ttest_rel
-ttest_rel(pivot_amp["cold"], pivot_amp["room"])
-ttest_rel(pivot_lat["cold"], pivot_lat["room"])
-ttest_rel(pivot_hw["cold"], pivot_hw["room"])
+#same for latency
+plt.figure(2)
+for _, row in pivot_lat.iterrows():
+    plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='o')
+plt.xlabel("Temperature")
+plt.ylabel("Latency")
+plt.title("Paired Nerve Latency")
+plt.show()
+
+#same for hw
+plt.figure(3)
+for _, row in pivot_hw.iterrows():
+    plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='o')
+plt.xlabel("Temperature")
+plt.ylabel("Half Width")
+plt.title("Paired Nerve Half Width")
+plt.show()
 
 # calculate average differences
 pivot_amp["delta"] = pivot_amp["room"] - pivot_amp["cold"]
 print(pivot_amp["delta"].mean(), pivot_amp["delta"].std())
-
-from scipy.stats import ttest_rel
+pivot_lat["delta"] = pivot_lat["room"] - pivot_lat["cold"]
+print(pivot_lat["delta"].mean(), pivot_lat["delta"].std())
+pivot_hw["delta"] = pivot_hw["room"] - pivot_hw["cold"]
+print(pivot_hw["delta"].mean(), pivot_hw["delta"].std())
 
 t_stat, p_val = ttest_rel(pivot_amp["room"], pivot_amp["cold"])
 print(t_stat, p_val)
+damp = pivot_amp["delta"].mean() / pivot_amp["delta"].std()
+print("Cohen's d:", damp)
 
-d = pivot_amp["delta"].mean() / pivot_amp["delta"].std()
-print("Cohen's d:", d)
+t_stat, p_val = ttest_rel(pivot_lat["room"], pivot_lat["cold"])
+print(t_stat, p_val)
+dlat = pivot_lat["delta"].mean() / pivot_lat["delta"].std()
+print("Cohen's d:", dlat)
+
+t_stat, p_val = ttest_rel(pivot_hw["room"], pivot_hw["cold"])
+print(t_stat, p_val)
+dhw = pivot_hw["delta"].mean() / pivot_hw["delta"].std()
+print("Cohen's d:", dhw)
