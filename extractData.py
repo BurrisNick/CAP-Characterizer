@@ -4,7 +4,6 @@ from CAPcharac import CAPcharac
 from pathlib import Path
 from scipy.stats import ttest_rel
 import pandas as pd
-import seaborn as sns
 
 results = []
 trial = 0 #keep track of the which CSV we are in (DEBUG)
@@ -15,11 +14,18 @@ for file in Path("data").rglob("*.csv"):
     print("category is: ", category) # for debug
     trial += 1
     output = CAPcharac(file, category, trial)
+    # groups frog, nerve, and temp
+    df["frog"] = df["category"].str[0]
+    df["nerve"] = df["category"].str[1]
+    df["temp"] = df["category"].str[2:] 
+    # converts group to category type
+    df["frog"] = df["frog"].astype("category")
+    df["nerve"] = df["nerve"].astype("category")
+    df["temp"] = df["temp"].astype("category")
 
     if output is not None:
 
         amp, lat, hw = output
-
 
         ### if we want to forge data more seriosly create a CD list and reference the list based on trials here
         # if category == "11cold":
@@ -50,33 +56,24 @@ for file in Path("data").rglob("*.csv"):
         elif category == '21room':
             CV = CDist[1] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
         else:
-            CV = 0
+            CV = CD / lat if lat not in [0, None] and not np.isnan(lat) else np.nan
 
         # for distance is constant 2 cm (forged data that works)
-        lat = CD / lat #lol -- i dont wanna ruin your current pipeline, so maybe jus change variable name to lat to CV
+        #lat = CD / lat #lol -- i dont wanna ruin your current pipeline, so maybe jus change variable name to lat to CV
 
         results.append([category, file.name, amp, lat, hw, CV])
 
 df = pd.DataFrame(results, columns=["category", "file", "amplitude", "latency", "halfwidth", 'velocity'])
 print(df)
 
-# groups frog, nerve, and temp
-df["frog"] = df["category"].str[0]
-df["nerve"] = df["category"].str[1]
-df["temp"] = df["category"].str[2:] 
-# converts group to category type
-df["frog"] = df["frog"].astype("category")
-df["nerve"] = df["nerve"].astype("category")
-df["temp"] = df["temp"].astype("category")
-
 #preliminary data summary
 summary = df.groupby(["frog", "nerve", "temp"]).agg(
     mean_amp=("amplitude", "mean"),
     sd_amp=("amplitude", "std"),
-    mean_lat=("latency", "mean"),
-    sd_lat=("latency", "std"),
+    mean_cv=("velocity", "mean"),
+    sd_cv=("velocity", "std"),
     mean_hw=("halfwidth", "mean"),
-    sd_hw=("halfwidth", "std")
+    sd_hw=("halfwidth", "std"),
 ).reset_index()
 print(summary)
 
@@ -87,12 +84,12 @@ pivot_amp = summary.pivot_table(
     values="mean_amp"
 ).reset_index()
 pivot_amp = pivot_amp[["frog", "nerve", "cold", "room"]]
-pivot_lat = summary.pivot_table(
+pivot_cv = summary.pivot_table(
     index=["frog", "nerve"],
     columns="temp",
-    values="mean_lat"
+    values="mean_cv"
 ).reset_index()
-pivot_lat = pivot_lat[["frog", "nerve", "cold", "room"]]
+pivot_cv = pivot_cv[["frog", "nerve", "cold", "room"]]
 pivot_hw = summary.pivot_table(
     index=["frog", "nerve"],
     columns="temp",
@@ -100,38 +97,38 @@ pivot_hw = summary.pivot_table(
 ).reset_index()
 pivot_hw = pivot_hw[["frog", "nerve", "cold", "room"]]
 
-#paired line plot to visualize paired amplitude changes with temperature
-plt.figure(1)
-for _, row in pivot_amp.iterrows():
-    plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='o')
-plt.xlabel("Temperature")
+plt.figure(figsize=(5,4))
+
+means = df.groupby("temp")["amplitude"].mean()
+stds = df.groupby("temp")["amplitude"].std()
+plt.bar(means.index, means.values, yerr=stds.values, capsize=5)
+plt.title("Amplitude by Temperature")
 plt.ylabel("Amplitude")
-plt.title("Paired Nerve Amplitude")
 plt.show()
 
-#same for latency
-plt.figure(2)
-for _, row in pivot_lat.iterrows():
-    plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='o')
-plt.xlabel("Temperature")
-plt.ylabel("Latency")
-plt.title("Paired Nerve Latency")
+plt.figure(figsize=(5,4))
+means = df.groupby("temp")["velocity"].mean()
+stds = df.groupby("temp")["velocity"].std()
+plt.bar(means.index, means.values, yerr=stds.values, capsize=5)
+plt.title("Conduction Velocity by Temperature")
+plt.ylabel("Velocity (m/s)")
 plt.show()
 
-#same for hw
-plt.figure(3)
-for _, row in pivot_hw.iterrows():
-    plt.plot(["cold", "room"], [row["cold"], row["room"]], marker='o')
-plt.xlabel("Temperature")
+plt.figure(figsize=(5,4))
+
+means = df.groupby("temp")["halfwidth"].mean()
+stds = df.groupby("temp")["halfwidth"].std()
+plt.bar(means.index, means.values, yerr=stds.values, capsize=5)
+plt.title("Half Width by Temperature")
 plt.ylabel("Half Width")
-plt.title("Paired Nerve Half Width")
 plt.show()
+
 
 # calculate average differences
 pivot_amp["delta"] = pivot_amp["room"] - pivot_amp["cold"]
 print(pivot_amp["delta"].mean(), pivot_amp["delta"].std())
-pivot_lat["delta"] = pivot_lat["room"] - pivot_lat["cold"]
-print(pivot_lat["delta"].mean(), pivot_lat["delta"].std())
+pivot_cv["delta"] = pivot_cv["room"] - pivot_cv["cold"]
+print(pivot_cv["delta"].mean(), pivot_cv["delta"].std())
 pivot_hw["delta"] = pivot_hw["room"] - pivot_hw["cold"]
 print(pivot_hw["delta"].mean(), pivot_hw["delta"].std())
 
@@ -140,9 +137,9 @@ print(t_stat, p_val)
 damp = pivot_amp["delta"].mean() / pivot_amp["delta"].std()
 print("Cohen's d:", damp)
 
-t_stat, p_val = ttest_rel(pivot_lat["room"], pivot_lat["cold"])
+t_stat, p_val = ttest_rel(pivot_cv["room"], pivot_cv["cold"])
 print(t_stat, p_val)
-dlat = pivot_lat["delta"].mean() / pivot_lat["delta"].std()
+dlat = pivot_cv["delta"].mean() / pivot_cv["delta"].std()
 print("Cohen's d:", dlat)
 
 t_stat, p_val = ttest_rel(pivot_hw["room"], pivot_hw["cold"])
