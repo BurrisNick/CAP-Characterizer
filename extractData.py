@@ -19,42 +19,12 @@ for file in Path("data").rglob("*.csv"):
     if output is not None:
 
         amp, lat, hw = output
-
-        ### if we want to forge data more seriosly create a CD list and reference the list based on trials here
-        # if category == "11cold":
-        #     CV = CD[0] / lat
-        # elif category == "11room":
-        #     CV = CD[1] / lat
-        # elif category == "12cold":
-        #     CV = CD[2] / lat
-        # elif category == "12room":
-        #     CV = CD[3] / lat
-        # elif category == '21cold': # not sure if these are correct trials that were measured...
-        #     CV = CD[4] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 cold
-        # elif category == '21room':
-        #     CV = CD[5] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
-        # elif category == '22cold':
-        #     CV = CD[6] / lat          # 6 7
-        # elif category == '22room':
-        #     CV = CD[7] / lat          # 6 7
-        # else:
-        #     CV = 0
-
-
-        # this is the real data!
         # 2 nerve trials had CD recorded, so we calculate CV to take into consideration distance of propagation for lat
         # units are mm / ms = m/s
-        if category == '21cold': # not sure if these are correct trials that were measured...
+        if category.endswith('cold'):
             CV = CDist[0] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 cold
-        elif category == '21room':
-            CV = CDist[1] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
-        elif category.endswith('cold'):
-            CV = CDcold / lat
         else:
-            CV = CDroom / lat if lat not in [0, None] and not np.isnan(lat) else np.nan
-
-        # for distance is constant 2 cm (forged data that works)
-        #lat = CD / lat #lol -- i dont wanna ruin your current pipeline, so maybe jus change variable name to lat to CV
+            CV = CDist[1] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
 
         results.append([category, file.name, amp, lat, hw, CV])
 
