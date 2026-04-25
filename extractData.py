@@ -8,20 +8,13 @@ import pandas as pd
 results = []
 trial = 0 #keep track of the which CSV we are in (DEBUG)
 CDist = [0.02, 0.03] #conduction distance between stimilating electrode and the recording electrodes in mm
-CD = 0.02
+CDcold = 0.02
+CDroom = 0.03
 for file in Path("data").rglob("*.csv"):
     category = file.parent.name # determines what category of trials
     print("category is: ", category) # for debug
     trial += 1
     output = CAPcharac(file, category, trial)
-    # groups frog, nerve, and temp
-    df["frog"] = df["category"].str[0]
-    df["nerve"] = df["category"].str[1]
-    df["temp"] = df["category"].str[2:] 
-    # converts group to category type
-    df["frog"] = df["frog"].astype("category")
-    df["nerve"] = df["nerve"].astype("category")
-    df["temp"] = df["temp"].astype("category")
 
     if output is not None:
 
@@ -55,8 +48,10 @@ for file in Path("data").rglob("*.csv"):
             CV = CDist[0] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 cold
         elif category == '21room':
             CV = CDist[1] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
+        elif category.endswith('cold'):
+            CV = CDcold / lat
         else:
-            CV = CD / lat if lat not in [0, None] and not np.isnan(lat) else np.nan
+            CV = CDroom / lat if lat not in [0, None] and not np.isnan(lat) else np.nan
 
         # for distance is constant 2 cm (forged data that works)
         #lat = CD / lat #lol -- i dont wanna ruin your current pipeline, so maybe jus change variable name to lat to CV
@@ -65,6 +60,15 @@ for file in Path("data").rglob("*.csv"):
 
 df = pd.DataFrame(results, columns=["category", "file", "amplitude", "latency", "halfwidth", 'velocity'])
 print(df)
+
+# groups frog, nerve, and temp
+df["frog"] = df["category"].str[0]
+df["nerve"] = df["category"].str[1]
+df["temp"] = df["category"].str[2:] 
+# converts group to category type
+df["frog"] = df["frog"].astype("category")
+df["nerve"] = df["nerve"].astype("category")
+df["temp"] = df["temp"].astype("category")
 
 #preliminary data summary
 summary = df.groupby(["frog", "nerve", "temp"]).agg(
