@@ -8,8 +8,11 @@ import seaborn as sns
 
 results = []
 trial = 0 #keep track of the which CSV we are in (DEBUG)
+CD = [0.02, 0.03] #conduction distance between stimilating electrode and the recording electrodes in mm
+
 for file in Path("data").rglob("*.csv"):
     category = file.parent.name # determines what category of trials
+    print("category is: ", category) # for debug
     trial += 1
     output = CAPcharac(file, category, trial)
 
@@ -17,9 +20,19 @@ for file in Path("data").rglob("*.csv"):
 
         amp, lat, hw = output
 
-        results.append([category, file.name, amp, lat, hw])
 
-df = pd.DataFrame(results, columns=["category", "file", "amplitude", "latency", "halfwidth"])
+        # 2 nerve trials had CD recorded, so we calculate CV to take into consideration distance of propagation for lat
+        # units are mm / ms = m/s
+        if category == '21cold': # not sure if these are correct trials that were measured...
+            CV = CD[0] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 cold
+        elif category == '21room':
+            CV = CD[1] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
+        else:
+            CV = 0
+
+        results.append([category, file.name, amp, lat, hw, CV])
+
+df = pd.DataFrame(results, columns=["category", "file", "amplitude", "latency", "halfwidth", 'velocity'])
 print(df)
 
 # groups frog, nerve, and temp
