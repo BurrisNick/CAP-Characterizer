@@ -6,10 +6,15 @@ from scipy.signal import find_peaks
 from pathlib import Path
 
 currentCat = ''
+individualFig = plt.figure()
+categoryFig = plt.figure()
 
 def CAPcharac(dataPath, category):
     global currentCat
+    global individualFig
+    global categoryFig
 
+    # deteremines if the category has changed
     if currentCat is not category:
         changedCat = True
         currentCat = category
@@ -98,13 +103,15 @@ def CAPcharac(dataPath, category):
     latency = timeENGPeak[0]
     halfwidth = hwidth[0]
 
-
     ##################################################
     # plotting the pulse and ENG along with the raw data
-    plt.plot(time, eng, label='eng')
-    plt.plot(time, eng1, label='eng1')
-    plt.plot(time, pulse1,label='pulse1')
-    plt.plot(timeENGPeak[:2], magPeak[:2], 'o')
+
+    plt.figure(individualFig.number) #select the figure to plot on
+    plt.clf()
+    plt.plot(time, eng, label=f'Raw', color= 'grey', lw=0.5)
+    plt.plot(time, eng1, label='eng1', color= 'k', lw=1)
+    plt.plot(time, pulse1,label='pulse1', color= 'r',lw=1)
+    plt.plot(timeENGPeak[:2], magPeak[:2], 'o', color= 'b')
 
     if magPeak.shape[0] > 1:
        titleText = f'{category}'\
@@ -116,6 +123,7 @@ def CAPcharac(dataPath, category):
                    f'AP mag: {magPeak[0] * 1000:.1f}mV' \
                    f'\nLatency: {timeENGPeak[0]:.1f}ms' \
                    f'\nhalfwidth: {hwidth[0]:.1f}ms'
+
     plt.title(titleText)
     plt.xlabel('time (ms)')
     plt.ylabel('magnitude (V)')
@@ -124,13 +132,28 @@ def CAPcharac(dataPath, category):
     if max(time) > 30:
         plt.xlim(min(time), 30)
 
+    # saves every single figure individually
+    plt.savefig(Path(__file__).parent / 'Figures' / f'{dataPath.stem}', dpi=300, bbox_inches='tight')
+    plt.close(individualFig)
+
+
+
+    # create annd saves figures for the previous category all plotted together, before the new category plots are made
+
+    plt.figure(categoryFig.number)
+
     if changedCat is True:
-        plt.savefig(Path(__file__).parent / 'Figures' / f'{dataPath.stem}')
-        plt.close()
+        plt.title(f'{category} ')
+        plt.xlabel('time (ms)')
+        plt.ylabel('magnitude (V)')
+        plt.savefig(Path(__file__).parent / 'Figures' / f'{category}', dpi=300, bbox_inches='tight')
+        plt.close(categoryFig)
         changedCat = False
 
-
-
+    plt.plot(time, eng, label=f'Raw', color= 'grey', lw=0.5)
+    plt.plot(time, eng1, label='eng1', color= 'k', lw=1)
+    plt.plot(time, pulse1,label='pulse1', color= 'r',lw=1)
+    plt.plot(timeENGPeak[:2], magPeak[:2], 'o', color= 'b')
 
     ####filtering data if we wanna mess with that
     # order = 3
