@@ -10,9 +10,12 @@ trial = 0 #keep track of the which CSV we are in (DEBUG)
 CDist = [0.02, 0.03] #conduction distance between stimilating electrode and the recording electrodes in mm
 CDcold = 0.02
 CDroom = 0.03
+last = False #tells CAPcharac that its the last data set and to save all the neccissary figures
+
 for file in Path("data").rglob("*.csv"):
     category = file.parent.name # determines what category of trials
     print("category is: ", category) # for debug
+
 
     output = CAPcharac(file, category)
 
@@ -27,6 +30,9 @@ for file in Path("data").rglob("*.csv"):
             CV = CDist[1] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
 
         results.append([category, file.name, amp, lat, hw, CV])
+
+print('Done going through data')
+CAPcharac(-1, -1) # identify that we have ran through all the data and to save the last group figure
 
 df = pd.DataFrame(results, columns=["category", "file", "amplitude", "latency", "halfwidth", 'velocity'])
 print(df)

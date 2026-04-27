@@ -26,9 +26,8 @@ def CAPcharac(dataPath, category):
             - amplitude: The detected peak's maximum magnitude of the first action potential (A-Fiber)
             - latency: when the detected peak's maximum magnitude occurs
             - halfwidth: the half width of the detected peak
-
-
     """
+
     # bring in global variables
     global currentCat
     global individualFig
@@ -37,16 +36,36 @@ def CAPcharac(dataPath, category):
     global changedCat
     global first
 
+
+    # save the final figure
+    if dataPath == -1 or category == -1:
+        print('prev cat: ',currentCat)
+        plt.title(f'{currentCat} ')
+        plt.xlabel('time (ms)')
+        plt.ylabel('magnitude (V)')
+        plt.savefig(Path(__file__).parent / 'Figures' / f'{currentCat}', dpi=300, bbox_inches='tight')
+        plt.clf()
+        plt.close(categoryFig)
+        plt.close(individualFig)
+        changedCat = False
+        print("saved figure...")
+        return None
+
+
     if first: #determines if this is the first function call - initiates the global currentCat
+        print("this is the first")
         currentCat = category
         first = False
     elif currentCat is not category:    # deteremines if the category has changed
-
+        print('working?')
+        prevCat = currentCat #save this category as the previous one for plot naming
         changedCat = True
         currentCat = category
-    else: # case for above ifs are not true
-        prevCat = category
+    else:                               # case for above ifs are not true
         changedCat = False
+
+
+
 
     data = pd.read_csv(dataPath) #get the csv data
 
@@ -173,14 +192,15 @@ def CAPcharac(dataPath, category):
         plt.title(f'{prevCat} ')
         plt.xlabel('time (ms)')
         plt.ylabel('magnitude (V)')
-        plt.savefig(Path(__file__).parent / 'Figures' / f'{category}', dpi=300, bbox_inches='tight')
+        plt.savefig(Path(__file__).parent / 'Figures' / f'{prevCat}', dpi=300, bbox_inches='tight')
         plt.clf()
         plt.close(categoryFig)
         changedCat = False
+        print("saved figure...")
 
     plt.plot(time, eng, label=f'Raw', color= 'grey', lw=0.5)
     plt.plot(time, eng1, label='eng1', color= 'k', lw=1)
-    plt.plot(time, pulse1,label='pulse1', color= 'r',lw=1)
+    plt.plot(time, pulse1, label='pulse1', color= 'r', lw=1)
     plt.plot(timeENGPeak[:2], magPeak[:2], 'o', color= 'b')
 
 
