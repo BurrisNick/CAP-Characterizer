@@ -3,8 +3,19 @@ from matplotlib import pyplot as plt
 import pandas as pd
 from scipy import signal
 from scipy.signal import find_peaks
+from pathlib import Path
 
-def CAPcharac(dataPath, category, trial):
+currentCat = ''
+
+def CAPcharac(dataPath, category):
+    global currentCat
+
+    if currentCat is not category:
+        changedCat = True
+        currentCat = category
+    else:
+        changedCat = False
+
     data = pd.read_csv(dataPath)
 
     time = data['x-axis']# time axis of the data
@@ -88,32 +99,38 @@ def CAPcharac(dataPath, category, trial):
     halfwidth = hwidth[0]
 
 
-    ###################################################
-    ## plotting the pulse and ENG along with the raw data
-    # plt.plot(time, eng, label='eng')
-    # plt.plot(time, eng1, label='eng1')
-    # plt.plot(time, pulse1,label='pulse1')
-    # plt.plot(timeENGPeak[:2], magPeak[:2], 'o')
-    #
-    # if magPeak.shape[0] > 1:
-    #    titleText = f'{category}'\
-    #                f'AP mag 1: {magPeak[0] * 1000:.1f}mV, mag 2: {magPeak[1] * 1000:.1f}mV' \
-    #                f'\nLatency 1st: {timeENGPeak[0]:.1f}ms, 2nd {timeENGPeak[1]:.1f}ms' \
-    #                f'\nhalfwidth 1st: {hwidth[0]:.1f}ms, 2nd: {hwidth[1]:.1f}ms'
-    # else:
-    #    titleText = f'{category}'\
-    #                f'AP mag: {magPeak[0] * 1000:.1f}mV' \
-    #                f'\nLatency: {timeENGPeak[0]:.1f}ms' \
-    #                f'\nhalfwidth: {hwidth[0]:.1f}ms'
-    # plt.title(titleText)
-    # plt.xlabel('time (ms)')
-    # plt.ylabel('magnitude (V)')
-    # plt.legend()
-    #
-    # if max(time) > 30:
-    #     plt.xlim(min(time), 30)
-    #
-    # plt.show()
+    ##################################################
+    # plotting the pulse and ENG along with the raw data
+    plt.plot(time, eng, label='eng')
+    plt.plot(time, eng1, label='eng1')
+    plt.plot(time, pulse1,label='pulse1')
+    plt.plot(timeENGPeak[:2], magPeak[:2], 'o')
+
+    if magPeak.shape[0] > 1:
+       titleText = f'{category}'\
+                   f'AP mag 1: {magPeak[0] * 1000:.1f}mV, mag 2: {magPeak[1] * 1000:.1f}mV' \
+                   f'\nLatency 1st: {timeENGPeak[0]:.1f}ms, 2nd {timeENGPeak[1]:.1f}ms' \
+                   f'\nhalfwidth 1st: {hwidth[0]:.1f}ms, 2nd: {hwidth[1]:.1f}ms'
+    else:
+       titleText = f'{category}'\
+                   f'AP mag: {magPeak[0] * 1000:.1f}mV' \
+                   f'\nLatency: {timeENGPeak[0]:.1f}ms' \
+                   f'\nhalfwidth: {hwidth[0]:.1f}ms'
+    plt.title(titleText)
+    plt.xlabel('time (ms)')
+    plt.ylabel('magnitude (V)')
+    plt.legend()
+
+    if max(time) > 30:
+        plt.xlim(min(time), 30)
+
+    if changedCat is True:
+        plt.savefig(Path(__file__).parent / 'Figures' / f'{dataPath.stem}')
+        plt.close()
+        changedCat = False
+
+
+
 
     ####filtering data if we wanna mess with that
     # order = 3
@@ -121,6 +138,8 @@ def CAPcharac(dataPath, category, trial):
     # print(sr)
     # sos = signal.butter(order,band, btype='bandpass', fs=sr, output='sos')
     # filtered_ekg = signal.sosfiltfilt(sos, eng)
+
+
 
 
 

@@ -13,8 +13,8 @@ CDroom = 0.03
 for file in Path("data").rglob("*.csv"):
     category = file.parent.name # determines what category of trials
     print("category is: ", category) # for debug
-    trial += 1
-    output = CAPcharac(file, category, trial)
+
+    output = CAPcharac(file, category)
 
     if output is not None:
 
