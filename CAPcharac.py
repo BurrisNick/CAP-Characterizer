@@ -5,23 +5,50 @@ from scipy import signal
 from scipy.signal import find_peaks
 from pathlib import Path
 
-currentCat = ''
-individualFig = plt.figure()
-categoryFig = plt.figure()
+currentCat = '' # used to see if current catergory is changed
+prevCat = '' # the previous category after a change is detected
+changedCat = False # true if a change is detected
+first = True #checks to see if this is the first time the function has ran
+individualFig = plt.figure() # figure attribute for the plotter that saves each scope CSV with Peak detection
+categoryFig = plt.figure() #combination of all data traces for a specific category
+
 
 def CAPcharac(dataPath, category):
+    """
+    calculates the amplitude, latency and half width of each action potential detected. capable of detected switched
+    channels IOs and switched bipolar recording leads based on polarity of the CSV data trace
+    Args:
+        dataPath: name of a CSV in parent folder.
+        category: the name of the category of trails
+
+    Returns:
+        tuple: A tuple containing:
+            - amplitude: The detected peak's maximum magnitude of the first action potential (A-Fiber)
+            - latency: when the detected peak's maximum magnitude occurs
+            - halfwidth: the half width of the detected peak
+
+
+    """
+    # bring in global variables
     global currentCat
     global individualFig
     global categoryFig
+    global prevCat
+    global changedCat
+    global first
 
-    # deteremines if the category has changed
-    if currentCat is not category:
+    if first: #determines if this is the first function call - initiates the global currentCat
+        currentCat = category
+        first = False
+    elif currentCat is not category:    # deteremines if the category has changed
+
         changedCat = True
         currentCat = category
-    else:
+    else: # case for above ifs are not true
+        prevCat = category
         changedCat = False
 
-    data = pd.read_csv(dataPath)
+    data = pd.read_csv(dataPath) #get the csv data
 
     time = data['x-axis']# time axis of the data
     eng = data['1'] #the eng recorded data
@@ -143,10 +170,11 @@ def CAPcharac(dataPath, category):
     plt.figure(categoryFig.number)
 
     if changedCat is True:
-        plt.title(f'{category} ')
+        plt.title(f'{prevCat} ')
         plt.xlabel('time (ms)')
         plt.ylabel('magnitude (V)')
         plt.savefig(Path(__file__).parent / 'Figures' / f'{category}', dpi=300, bbox_inches='tight')
+        plt.clf()
         plt.close(categoryFig)
         changedCat = False
 
@@ -155,15 +183,13 @@ def CAPcharac(dataPath, category):
     plt.plot(time, pulse1,label='pulse1', color= 'r',lw=1)
     plt.plot(timeENGPeak[:2], magPeak[:2], 'o', color= 'b')
 
+
     ####filtering data if we wanna mess with that
     # order = 3
     # band = [50, 3000]
     # print(sr)
     # sos = signal.butter(order,band, btype='bandpass', fs=sr, output='sos')
     # filtered_ekg = signal.sosfiltfilt(sos, eng)
-
-
-
 
 
     return amplitude, latency, halfwidth
