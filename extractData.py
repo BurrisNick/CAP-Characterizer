@@ -7,9 +7,9 @@ import pandas as pd
 
 results = []
 trial = 0 #keep track of the which CSV we are in (DEBUG)
-CDist = [0.02, 0.03] #conduction distance between stimilating electrode and the recording electrodes in mm
-CDcold = 0.02
-CDroom = 0.03
+CDist = [0.02, 0.03] # conduction distance between stimilating electrode and the recording electrodes in mm
+CDcold = 0.02 #m
+CDroom = 0.03 #m
 last = False #tells CAPcharac that its the last data set and to save all the neccissary figures
 
 for file in Path("data").rglob("*.csv"):
@@ -25,9 +25,9 @@ for file in Path("data").rglob("*.csv"):
         # 2 nerve trials had CD recorded, so we calculate CV to take into consideration distance of propagation for lat
         # units are mm / ms = m/s
         if category.endswith('cold'):
-            CV = CDist[0] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 cold
+            CV = CDist[0]*1000 / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 cold
         else:
-            CV = CDist[1] / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
+            CV = CDist[1]*1000 / lat #conduction velocity based on the latency and conduction distance recorded for frog 2 room
 
         results.append([category, file.name, amp, lat, hw, CV])
 

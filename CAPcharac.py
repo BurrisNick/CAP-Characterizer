@@ -39,7 +39,6 @@ def CAPcharac(dataPath, category):
 
     # save the final figure
     if dataPath == -1 or category == -1:
-        print('prev cat: ',currentCat)
         plt.title(f'{currentCat} ')
         plt.xlabel('time (ms)')
         plt.ylabel('magnitude (V)')
@@ -48,16 +47,13 @@ def CAPcharac(dataPath, category):
         plt.close(categoryFig)
         plt.close(individualFig)
         changedCat = False
-        print("saved figure...")
         return None
 
 
     if first: #determines if this is the first function call - initiates the global currentCat
-        print("this is the first")
         currentCat = category
         first = False
     elif currentCat is not category:    # deteremines if the category has changed
-        print('working?')
         prevCat = currentCat #save this category as the previous one for plot naming
         changedCat = True
         currentCat = category
@@ -155,8 +151,8 @@ def CAPcharac(dataPath, category):
     plt.figure(individualFig.number) #select the figure to plot on
     plt.clf()
     plt.plot(time, eng, label=f'Raw', color= 'grey', lw=0.5)
-    plt.plot(time, eng1, label='eng1', color= 'k', lw=1)
-    plt.plot(time, pulse1,label='pulse1', color= 'r',lw=1)
+    plt.plot(time, eng1, label='Filtered', color= 'k', lw=1)
+    plt.plot(time, pulse1,label='Pulse', color= 'r',lw=1)
     plt.plot(timeENGPeak[:2], magPeak[:2], 'o', color= 'b')
 
     if magPeak.shape[0] > 1:
@@ -196,7 +192,6 @@ def CAPcharac(dataPath, category):
         plt.clf()
         plt.close(categoryFig)
         changedCat = False
-        print("saved figure...")
 
     plt.plot(time, eng, label=f'Raw', color= 'grey', lw=0.5)
     plt.plot(time, eng1, label='eng1', color= 'k', lw=1)
